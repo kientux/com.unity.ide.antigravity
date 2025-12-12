@@ -18,8 +18,6 @@ This package provides Unity Editor integration with [Antigravity](https://antigr
 
 ## Installation
 
-This package is typically installed as a built-in Unity package. If you need to install it manually:
-
 1. Open the Package Manager in Unity (**Window** > **Package Manager**)
 2. Click the **+** button and select **Add package from git URL...**
 3. Enter the package repository URL
