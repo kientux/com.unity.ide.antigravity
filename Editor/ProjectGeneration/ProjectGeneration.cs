@@ -17,7 +17,7 @@ using UnityEditor;
 using UnityEditor.Compilation;
 using UnityEngine;
 
-namespace Microsoft.Unity.VisualStudio.Editor
+namespace Antigravity.Unity.Editor
 {
 	public enum ScriptingLanguage
 	{
@@ -55,7 +55,7 @@ namespace Microsoft.Unity.VisualStudio.Editor
 		internal readonly IAssemblyNameProvider m_AssemblyNameProvider;
 		readonly IFileIO m_FileIOProvider;
 		readonly IGUIDGenerator m_GUIDGenerator;
-		IVisualStudioInstallation m_CurrentInstallation;
+		IAntigravityInstallation m_CurrentInstallation;
 
 		public ProjectGeneration() : this(Directory.GetParent(Application.dataPath).FullName)
 		{
@@ -139,7 +139,7 @@ namespace Microsoft.Unity.VisualStudio.Editor
 			}
 		}
 
-		private void CreateExtraFiles(IVisualStudioInstallation installation)
+		private void CreateExtraFiles(IAntigravityInstallation installation)
 		{
 			installation?.CreateExtraFiles(ProjectDirectory);
 		}
@@ -158,8 +158,8 @@ namespace Microsoft.Unity.VisualStudio.Editor
 
 		private void RefreshCurrentInstallation()
 		{
-			var editor = CodeEditor.CurrentEditor as VisualStudioEditor;
-			editor?.TryGetVisualStudioInstallationForPath(CodeEditor.CurrentEditorInstallation, lookupDiscoveredInstallations: true, out m_CurrentInstallation);
+			var editor = CodeEditor.CurrentEditor as AntigravityEditor;
+			editor?.TryGetAntigravityInstallationForPath(CodeEditor.CurrentEditorInstallation, lookupDiscoveredInstallations: true, out m_CurrentInstallation);
 		}
 
 		static ProfilerMarker solutionSyncMarker = new ProfilerMarker("SolutionSynchronizerSync");
@@ -649,7 +649,7 @@ namespace Microsoft.Unity.VisualStudio.Editor
 			if (m_CurrentInstallation == null || !m_CurrentInstallation.SupportsAnalyzers)
 				return;
 
-			// Analyzers provided by VisualStudio
+			// Analyzers provided by Antigravity
 			var analyzers = new List<string>(m_CurrentInstallation.GetAnalyzers());
 			var additionalFilePaths = new List<string>();
 			var rulesetPath = string.Empty;
@@ -724,7 +724,7 @@ namespace Microsoft.Unity.VisualStudio.Editor
 				FlavoringProjectType = projectType + ":" + (int)projectType,
 				FlavoringBuildTarget = EditorUserBuildSettings.activeBuildTarget + ":" + (int)EditorUserBuildSettings.activeBuildTarget,
 				FlavoringUnityVersion = Application.unityVersion,
-				FlavoringPackageVersion = VisualStudioIntegration.PackageVersion(),
+				FlavoringPackageVersion = AntigravityIntegration.PackageVersion(),
 			};
 
 			SetAnalyzerAndSourceGeneratorProperties(assembly, responseFileData, projectProperties);
@@ -834,7 +834,7 @@ namespace Microsoft.Unity.VisualStudio.Editor
 		private void SyncSolution(IEnumerable<Assembly> assemblies)
 		{
 			if (InvalidCharactersRegexPattern.IsMatch(ProjectDirectory))
-				Debug.LogWarning("Project path contains special characters, which can be an issue when opening Visual Studio");
+				Debug.LogWarning("Project path contains special characters, which can be an issue when opening Antigravity");
 
 			var solutionFile = SolutionFile();
 			var previousSolution = m_FileIOProvider.Exists(solutionFile) ? SolutionParser.ParseSolutionFile(solutionFile, m_FileIOProvider) : null;

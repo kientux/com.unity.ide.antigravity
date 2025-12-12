@@ -5,7 +5,7 @@
 using System.Globalization;
 using System.Net;
 
-namespace Microsoft.Unity.VisualStudio.Editor.Messaging
+namespace Antigravity.Unity.Editor.Messaging
 {
 	internal class Message
 	{

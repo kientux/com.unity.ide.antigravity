@@ -12,14 +12,14 @@ using UnityEditor;
 using UnityEngine;
 using Unity.CodeEditor;
 
-[assembly: InternalsVisibleTo("Unity.VisualStudio.EditorTests")]
-[assembly: InternalsVisibleTo("Unity.VisualStudio.Standalone.EditorTests")]
+[assembly: InternalsVisibleTo("Unity.Antigravity.EditorTests")]
+[assembly: InternalsVisibleTo("Unity.Antigravity.Standalone.EditorTests")]
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
 
-namespace Microsoft.Unity.VisualStudio.Editor
+namespace Antigravity.Unity.Editor
 {
 	[InitializeOnLoad]
-	public class VisualStudioEditor : IExternalCodeEditor
+	public class AntigravityEditor : IExternalCodeEditor
 	{
 		CodeEditor.Installation[] IExternalCodeEditor.Installations => _discoverInstallations
 			.Result
@@ -27,63 +27,41 @@ namespace Microsoft.Unity.VisualStudio.Editor
 			.Select(v => v.ToCodeEditorInstallation())
 			.ToArray();
 
-		private static readonly AsyncOperation<Dictionary<string, IVisualStudioInstallation>> _discoverInstallations;
+		private static readonly AsyncOperation<Dictionary<string, IAntigravityInstallation>> _discoverInstallations;
 
-		static VisualStudioEditor()
+		static AntigravityEditor()
 		{
 			if (!UnityInstallation.IsMainUnityEditorProcess)
 				return;
 
 			Discovery.Initialize();
-			CodeEditor.Register(new VisualStudioEditor());
+			CodeEditor.Register(new AntigravityEditor());
 
-			_discoverInstallations = AsyncOperation<Dictionary<string, IVisualStudioInstallation>>.Run(DiscoverInstallations);
+			_discoverInstallations = AsyncOperation<Dictionary<string, IAntigravityInstallation>>.Run(DiscoverInstallations);
 		}
 
-#if UNITY_2019_4_OR_NEWER && !UNITY_2020
-		[InitializeOnLoadMethod]
-		static void LegacyVisualStudioCodePackageDisabler()
-		{
-			// disable legacy Visual Studio Code packages
-			var editor = CodeEditor.Editor.GetCodeEditorForPath("code.cmd");
-			if (editor == null)
-				return;
-
-			if (editor is VisualStudioEditor)
-				return;
-
-			// only disable the com.unity.ide.vscode package
-			var assembly = editor.GetType().Assembly;
-			var assemblyName = assembly.GetName().Name;
-			if (assemblyName != "Unity.VSCode.Editor")
-				return;
-
-			CodeEditor.Unregister(editor);
-		}
-#endif
-
-		private static Dictionary<string, IVisualStudioInstallation> DiscoverInstallations()
+		private static Dictionary<string, IAntigravityInstallation> DiscoverInstallations()
 		{
 			try
 			{
 				return Discovery
-					.GetVisualStudioInstallations()
+					.GetAntigravityInstallations()
 					.ToDictionary(i => Path.GetFullPath(i.Path), i => i);
 			}
 			catch (Exception ex)
 			{
-				Debug.LogError($"Error detecting Visual Studio installations: {ex}");
-				return new Dictionary<string, IVisualStudioInstallation>();
+				Debug.LogError($"Error detecting Antigravity installations: {ex}");
+				return new Dictionary<string, IAntigravityInstallation>();
 			}
 		}
 
-		internal static bool IsEnabled => CodeEditor.CurrentEditor is VisualStudioEditor && UnityInstallation.IsMainUnityEditorProcess;
+		internal static bool IsEnabled => CodeEditor.CurrentEditor is AntigravityEditor && UnityInstallation.IsMainUnityEditorProcess;
 
 		// this one seems legacy and not used anymore
 		// keeping it for now given it is public, so we need a major bump to remove it 
 		public void CreateIfDoesntExist()
 		{
-			if (!TryGetVisualStudioInstallationForPath(CodeEditor.CurrentEditorInstallation, true, out var installation)) 
+			if (!TryGetAntigravityInstallationForPath(CodeEditor.CurrentEditorInstallation, true, out var installation)) 
 				return;
 
 			var generator = installation.ProjectGenerator;
@@ -95,7 +73,7 @@ namespace Microsoft.Unity.VisualStudio.Editor
 		{
 		}
 
-		internal virtual bool TryGetVisualStudioInstallationForPath(string editorPath, bool lookupDiscoveredInstallations, out IVisualStudioInstallation installation)
+		internal virtual bool TryGetAntigravityInstallationForPath(string editorPath, bool lookupDiscoveredInstallations, out IAntigravityInstallation installation)
 		{
 			editorPath = Path.GetFullPath(editorPath);
 
@@ -108,7 +86,7 @@ namespace Microsoft.Unity.VisualStudio.Editor
 
 		public virtual bool TryGetInstallationForPath(string editorPath, out CodeEditor.Installation installation)
 		{
-			var result = TryGetVisualStudioInstallationForPath(editorPath, lookupDiscoveredInstallations: false, out var vsi);
+			var result = TryGetAntigravityInstallationForPath(editorPath, lookupDiscoveredInstallations: false, out var vsi);
 			installation = vsi?.ToCodeEditorInstallation() ?? default;
 			return result;
 		}
@@ -118,7 +96,7 @@ namespace Microsoft.Unity.VisualStudio.Editor
 			GUILayout.BeginHorizontal();
 			GUILayout.FlexibleSpace();
 
-			if (!TryGetVisualStudioInstallationForPath(CodeEditor.CurrentEditorInstallation, true, out var installation))
+			if (!TryGetAntigravityInstallationForPath(CodeEditor.CurrentEditorInstallation, true, out var installation))
 				return;
 
 			var package = UnityEditor.PackageManager.PackageInfo.FindForAssembly(GetType().Assembly);
@@ -146,7 +124,7 @@ namespace Microsoft.Unity.VisualStudio.Editor
 			EditorGUI.indentLevel--;
 		}
 
-		private static void RegenerateProjectFiles(IVisualStudioInstallation installation)
+		private static void RegenerateProjectFiles(IAntigravityInstallation installation)
 		{
 			var rect = EditorGUI.IndentedRect(EditorGUILayout.GetControlRect());
 			rect.width = 252;
@@ -156,7 +134,7 @@ namespace Microsoft.Unity.VisualStudio.Editor
 			}
 		}
 
-		private static void SettingsButton(ProjectGenerationFlag preference, string guiMessage, string toolTip, IVisualStudioInstallation installation)
+		private static void SettingsButton(ProjectGenerationFlag preference, string guiMessage, string toolTip, IAntigravityInstallation installation)
 		{
 			var generator = installation.ProjectGenerator;
 			var prevValue = generator.AssemblyNameProvider.ProjectGenerationFlag.HasFlag(preference);
@@ -168,7 +146,7 @@ namespace Microsoft.Unity.VisualStudio.Editor
 
 		public void SyncIfNeeded(string[] addedFiles, string[] deletedFiles, string[] movedFiles, string[] movedFromFiles, string[] importedFiles)
 		{
-			if (TryGetVisualStudioInstallationForPath(CodeEditor.CurrentEditorInstallation, true, out var installation))
+			if (TryGetAntigravityInstallationForPath(CodeEditor.CurrentEditorInstallation, true, out var installation))
 			{
 				installation.ProjectGenerator.SyncIfNeeded(addedFiles.Union(deletedFiles).Union(movedFiles).Union(movedFromFiles), importedFiles);
 			}
@@ -194,7 +172,7 @@ namespace Microsoft.Unity.VisualStudio.Editor
 
 		public void SyncAll()
 		{
-			if (TryGetVisualStudioInstallationForPath(CodeEditor.CurrentEditorInstallation, true, out var installation))
+			if (TryGetAntigravityInstallationForPath(CodeEditor.CurrentEditorInstallation, true, out var installation))
 			{
 				installation.ProjectGenerator.Sync();
 			}
@@ -217,7 +195,7 @@ namespace Microsoft.Unity.VisualStudio.Editor
 			var editorPath = CodeEditor.CurrentEditorInstallation;
 
 			if (!Discovery.TryDiscoverInstallation(editorPath, out var installation)) {
-				Debug.LogWarning($"Visual Studio executable {editorPath} is not found. Please change your settings in Edit > Preferences > External Tools.");
+				Debug.LogWarning($"Antigravity executable {editorPath} is not found. Please change your settings in Edit > Preferences > External Tools.");
 				return false;
 			}
 
@@ -232,7 +210,7 @@ namespace Microsoft.Unity.VisualStudio.Editor
 			return installation.Open(path, line, column, solution);
 		}
 
-		private static bool OpenFromInstallation(IVisualStudioInstallation installation, string path, int line, int column)
+		private static bool OpenFromInstallation(IAntigravityInstallation installation, string path, int line, int column)
 		{
 			var solution = installation.ProjectGenerator.SolutionFile();
 			return installation.Open(path, line, column, solution);
@@ -305,3 +283,4 @@ namespace Microsoft.Unity.VisualStudio.Editor
 		}
 	}
 }
+

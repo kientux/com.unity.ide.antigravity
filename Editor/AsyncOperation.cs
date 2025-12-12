@@ -6,7 +6,7 @@
 using System;
 using System.Threading;
 
-namespace Microsoft.Unity.VisualStudio.Editor
+namespace Antigravity.Unity.Editor
 {
 	internal class AsyncOperation<T>
 	{

@@ -7,7 +7,7 @@ using System;
 using UnityEditor;
 using UnityEditor.Compilation;
 
-namespace Microsoft.Unity.VisualStudio.Editor
+namespace Antigravity.Unity.Editor
 {
 	internal static class UnityInstallation
 	{

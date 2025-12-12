@@ -1,4 +1,15 @@
-# Code Editor Package for Visual Studio
+# Code Editor Package for Antigravity
+
+## [2.0.26] - 2025-12-12
+
+Migration:
+
+- Migrated from Visual Studio Code to Antigravity Editor support.
+- Removed Windows Visual Studio support (Windows-only COM integration, VSWhere).
+- Updated application detection for Antigravity (default path: `/Applications/Antigravity.app`).
+- Updated CLI to use `agy` command for launching Antigravity.
+- Updated namespace from `Microsoft.Unity.VisualStudio.Editor` to `Antigravity.Unity.Editor`.
+- Updated package name from `com.unity.ide.visualstudio` to `com.unity.ide.antigravity`.
 
 ## [2.0.25] - 2025-09-16
 

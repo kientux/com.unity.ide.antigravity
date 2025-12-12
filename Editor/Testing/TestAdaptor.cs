@@ -2,7 +2,7 @@
 
 using UnityEditor.TestTools.TestRunner.Api;
 
-namespace Microsoft.Unity.VisualStudio.Editor.Testing
+namespace Antigravity.Unity.Editor.Testing
 {
 	[Serializable]
 	internal class TestAdaptorContainer

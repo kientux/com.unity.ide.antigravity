@@ -6,7 +6,7 @@
 using System.IO;
 using System.Text;
 
-namespace Microsoft.Unity.VisualStudio.Editor
+namespace Antigravity.Unity.Editor
 {
 	public interface IFileIO
 	{

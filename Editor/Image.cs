@@ -5,7 +5,7 @@
 using System;
 using System.IO;
 
-namespace Microsoft.Unity.VisualStudio.Editor
+namespace Antigravity.Unity.Editor
 {
 	public sealed class Image : IDisposable
 	{

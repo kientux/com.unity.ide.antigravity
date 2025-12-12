@@ -7,7 +7,7 @@ using System;
 using System.IO;
 using UnityEngine;
 
-namespace Microsoft.Unity.VisualStudio.Editor
+namespace Antigravity.Unity.Editor
 {
 	internal static class FileUtility
 	{

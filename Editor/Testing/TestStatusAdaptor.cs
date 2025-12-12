@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Microsoft.Unity.VisualStudio.Editor.Testing
+namespace Antigravity.Unity.Editor.Testing
 {
 	[Serializable]
 	internal enum TestStatusAdaptor

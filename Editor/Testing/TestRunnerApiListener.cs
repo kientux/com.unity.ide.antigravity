@@ -3,7 +3,7 @@ using UnityEditor;
 using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
 
-namespace Microsoft.Unity.VisualStudio.Editor.Testing
+namespace Antigravity.Unity.Editor.Testing
 {
 	[InitializeOnLoad]
 	internal class TestRunnerApiListener
@@ -13,7 +13,7 @@ namespace Microsoft.Unity.VisualStudio.Editor.Testing
 
 		static TestRunnerApiListener()
 		{
-			if (!VisualStudioEditor.IsEnabled)
+			if (!AntigravityEditor.IsEnabled)
 				return;
 
 			_testRunnerApi = ScriptableObject.CreateInstance<TestRunnerApi>();

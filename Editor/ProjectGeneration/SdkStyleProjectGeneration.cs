@@ -10,7 +10,7 @@ using System.Text;
 using UnityEditor.Compilation;
 using UnityEngine;
 
-namespace Microsoft.Unity.VisualStudio.Editor
+namespace Antigravity.Unity.Editor
 {
 	internal class SdkStyleProjectGeneration : ProjectGeneration
 	{

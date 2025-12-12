@@ -7,7 +7,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 
-namespace Microsoft.Unity.VisualStudio.Editor.Messaging
+namespace Antigravity.Unity.Editor.Messaging
 {
 	internal class TcpClient
 	{

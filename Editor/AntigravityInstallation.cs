@@ -1,4 +1,4 @@
-﻿/*---------------------------------------------------------------------------------------------
+/*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
@@ -11,15 +11,33 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEngine;
 using SimpleJSON;
+using Unity.CodeEditor;
 using IOPath = System.IO.Path;
 
-namespace Microsoft.Unity.VisualStudio.Editor
+namespace Antigravity.Unity.Editor
 {
-	internal class VisualStudioCodeInstallation : VisualStudioInstallation
+	internal interface IAntigravityInstallation
+	{
+		string Path { get; }
+		bool SupportsAnalyzers { get; }
+		Version LatestLanguageVersionSupported { get; }
+		string[] GetAnalyzers();
+		CodeEditor.Installation ToCodeEditorInstallation();
+		bool Open(string path, int line, int column, string solutionPath);
+		IGenerator ProjectGenerator { get; }
+		void CreateExtraFiles(string projectDirectory);
+	}
+
+	internal class AntigravityInstallation : IAntigravityInstallation
 	{
 		private static readonly IGenerator _generator = GeneratorFactory.GetInstance(GeneratorStyle.SDK);
 
-		public override bool SupportsAnalyzers
+		public string Name { get; set; }
+		public string Path { get; set; }
+		public Version Version { get; set; }
+		public bool IsPrerelease { get; set; }
+
+		public bool SupportsAnalyzers
 		{
 			get
 			{
@@ -27,7 +45,7 @@ namespace Microsoft.Unity.VisualStudio.Editor
 			}
 		}
 
-		public override Version LatestLanguageVersionSupported
+		public Version LatestLanguageVersionSupported
 		{
 			get
 			{
@@ -48,15 +66,26 @@ namespace Microsoft.Unity.VisualStudio.Editor
 				.FirstOrDefault();
 		}
 
-		public override string[] GetAnalyzers()
+		public string[] GetAnalyzers()
 		{
 			var vstuPath = GetExtensionPath();
 			if (string.IsNullOrEmpty(vstuPath))
 				return Array.Empty<string>();
 
-			return GetAnalyzers(vstuPath); }
+			return GetAnalyzersFromPath(vstuPath);
+		}
 
-		public override IGenerator ProjectGenerator
+		protected static string[] GetAnalyzersFromPath(string path)
+		{
+			var analyzersDirectory = IOPath.GetFullPath(IOPath.Combine(path, "Analyzers"));
+
+			if (Directory.Exists(analyzersDirectory))
+				return Directory.GetFiles(analyzersDirectory, "*Analyzers.dll", SearchOption.AllDirectories);
+
+			return Array.Empty<string>();
+		}
+
+		public IGenerator ProjectGenerator
 		{
 			get
 			{
@@ -64,25 +93,30 @@ namespace Microsoft.Unity.VisualStudio.Editor
 			}
 		}
 
+		public CodeEditor.Installation ToCodeEditorInstallation()
+		{
+			return new CodeEditor.Installation() { Name = Name, Path = Path };
+		}
+
 		private static bool IsCandidateForDiscovery(string path)
 		{
 #if UNITY_EDITOR_OSX
-			return Directory.Exists(path) && Regex.IsMatch(path, ".*Code.*.app$", RegexOptions.IgnoreCase);
+			return Directory.Exists(path) && Regex.IsMatch(path, ".*Antigravity.*.app$", RegexOptions.IgnoreCase);
 #elif UNITY_EDITOR_WIN
-			return File.Exists(path) && Regex.IsMatch(path, ".*Code.*.exe$", RegexOptions.IgnoreCase);
+			return File.Exists(path) && Regex.IsMatch(path, ".*Antigravity.*.exe$", RegexOptions.IgnoreCase);
 #else
-			return File.Exists(path) && path.EndsWith("code", StringComparison.OrdinalIgnoreCase);
+			return File.Exists(path) && path.EndsWith("agy", StringComparison.OrdinalIgnoreCase);
 #endif
 		}
 
 		[Serializable]
-		internal class VisualStudioCodeManifest
+		internal class AntigravityManifest
 		{
 			public string name;
 			public string version;
 		}
 
-		public static bool TryDiscoverInstallation(string editorPath, out IVisualStudioInstallation installation)
+		public static bool TryDiscoverInstallation(string editorPath, out IAntigravityInstallation installation)
 		{
 			installation = null;
 
@@ -108,7 +142,7 @@ namespace Microsoft.Unity.VisualStudio.Editor
 #else
 				// on Linux, editorPath is a file, in a bin sub-directory
 				var parent = Directory.GetParent(manifestBase);
-				// but we can link to [vscode]/code or [vscode]/bin/code
+				// but we can link to [antigravity]/agy or [antigravity]/bin/agy
 				manifestBase = parent?.Name == "bin" ? parent.Parent?.FullName : parent?.FullName;
 #endif
 
@@ -118,7 +152,7 @@ namespace Microsoft.Unity.VisualStudio.Editor
 				var manifestFullPath = IOPath.Combine(manifestBase, "resources", "app", "package.json");
 				if (File.Exists(manifestFullPath))
 				{
-					var manifest = JsonUtility.FromJson<VisualStudioCodeManifest>(File.ReadAllText(manifestFullPath));
+					var manifest = JsonUtility.FromJson<AntigravityManifest>(File.ReadAllText(manifestFullPath));
 					Version.TryParse(manifest.version.Split('-').First(), out version);
 					isPrerelease = manifest.version.ToLower().Contains("insider");
 				}
@@ -129,10 +163,10 @@ namespace Microsoft.Unity.VisualStudio.Editor
 			}
 
 			isPrerelease = isPrerelease || editorPath.ToLower().Contains("insider");
-			installation = new VisualStudioCodeInstallation()
+			installation = new AntigravityInstallation()
 			{
 				IsPrerelease = isPrerelease,
-				Name = "Visual Studio Code" + (isPrerelease ? " - Insider" : string.Empty) + (version != null ? $" [{version.ToString(3)}]" : string.Empty),
+				Name = "Antigravity" + (isPrerelease ? " - Insider" : string.Empty) + (version != null ? $" [{version.ToString(3)}]" : string.Empty),
 				Path = editorPath,
 				Version = version ?? new Version()
 			};
@@ -140,7 +174,7 @@ namespace Microsoft.Unity.VisualStudio.Editor
 			return true;
 		}
 
-		public static IEnumerable<IVisualStudioInstallation> GetVisualStudioInstallations()
+		public static IEnumerable<IAntigravityInstallation> GetAntigravityInstallations()
 		{
 			var candidates = new List<string>();
 
@@ -150,17 +184,16 @@ namespace Microsoft.Unity.VisualStudio.Editor
 
 			foreach (var basePath in new[] {localAppPath, programFiles})
 			{
-				candidates.Add(IOPath.Combine(basePath, "Microsoft VS Code", "Code.exe"));
-				candidates.Add(IOPath.Combine(basePath, "Microsoft VS Code Insiders", "Code - Insiders.exe"));
+				candidates.Add(IOPath.Combine(basePath, "Antigravity", "Antigravity.exe"));
 			}
 #elif UNITY_EDITOR_OSX
 			var appPath = IOPath.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles));
-			candidates.AddRange(Directory.EnumerateDirectories(appPath, "Visual Studio Code*.app"));
+			candidates.AddRange(Directory.EnumerateDirectories(appPath, "Antigravity*.app"));
 #elif UNITY_EDITOR_LINUX
 			// Well known locations
-			candidates.Add("/usr/bin/code");
-			candidates.Add("/bin/code");
-			candidates.Add("/usr/local/bin/code");
+			candidates.Add("/usr/bin/agy");
+			candidates.Add("/bin/agy");
+			candidates.Add("/usr/local/bin/agy");
 
 			// Preference ordered base directories relative to which desktop files should be searched
 			candidates.AddRange(GetXdgCandidates());
@@ -189,7 +222,7 @@ namespace Microsoft.Unity.VisualStudio.Editor
 
 				try
 				{
-					var desktopFile = IOPath.Combine(dir, "applications/code.desktop");
+					var desktopFile = IOPath.Combine(dir, "applications/antigravity.desktop");
 					if (!File.Exists(desktopFile))
 						continue;
 				
@@ -228,7 +261,7 @@ namespace Microsoft.Unity.VisualStudio.Editor
 		}
 #endif
 
-		public override void CreateExtraFiles(string projectDirectory)
+		public void CreateExtraFiles(string projectDirectory)
 		{
 			try
 			{
@@ -509,7 +542,7 @@ namespace Microsoft.Unity.VisualStudio.Editor
 			}
 		}
 
-		public override bool Open(string path, int line, int column, string solution)
+		public bool Open(string path, int line, int column, string solution)
 		{
 			var application = Path;
 
@@ -543,7 +576,7 @@ namespace Microsoft.Unity.VisualStudio.Editor
 			// wrap with built-in OSX open feature
 			arguments = $"-n \"{application}\" --args {arguments}";
 			application = "open";
-			return ProcessRunner.ProcessStartInfoFor(application, arguments, redirect:false, shell: true);
+			return ProcessRunner.ProcessStartInfoFor(application, arguments, redirect: false, shell: true);
 #else
 			return ProcessRunner.ProcessStartInfoFor(application, arguments, redirect: false);
 #endif
@@ -554,3 +587,4 @@ namespace Microsoft.Unity.VisualStudio.Editor
 		}
 	}
 }
+

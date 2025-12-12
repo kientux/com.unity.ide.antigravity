@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 using System;
 
-namespace Microsoft.Unity.VisualStudio.Editor.Messaging
+namespace Antigravity.Unity.Editor.Messaging
 {
 	internal class ExceptionEventArgs
 	{

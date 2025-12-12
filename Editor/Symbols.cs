@@ -5,7 +5,7 @@
 using System;
 using System.IO;
 
-namespace Microsoft.Unity.VisualStudio.Editor
+namespace Antigravity.Unity.Editor
 {
 	internal static class Symbols
 	{

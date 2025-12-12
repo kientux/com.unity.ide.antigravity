@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
 
-namespace Microsoft.Unity.VisualStudio.Editor.Testing
+namespace Antigravity.Unity.Editor.Testing
 {
 	internal class TestRunnerCallbacks : ICallbacks
 	{
@@ -48,22 +48,22 @@ namespace Microsoft.Unity.VisualStudio.Editor.Testing
 
 		public void RunFinished(ITestResultAdaptor testResultAdaptor)
 		{
-			VisualStudioIntegration.BroadcastMessage(Messaging.MessageType.RunFinished, Serialize(testResultAdaptor));
+			AntigravityIntegration.BroadcastMessage(Messaging.MessageType.RunFinished, Serialize(testResultAdaptor));
 		}
 
 		public void RunStarted(ITestAdaptor testAdaptor)
 		{
-			VisualStudioIntegration.BroadcastMessage(Messaging.MessageType.RunStarted, Serialize(testAdaptor));
+			AntigravityIntegration.BroadcastMessage(Messaging.MessageType.RunStarted, Serialize(testAdaptor));
 		}
 
 		public void TestFinished(ITestResultAdaptor testResultAdaptor)
 		{
-			VisualStudioIntegration.BroadcastMessage(Messaging.MessageType.TestFinished, Serialize(testResultAdaptor));
+			AntigravityIntegration.BroadcastMessage(Messaging.MessageType.TestFinished, Serialize(testResultAdaptor));
 		}
 
 		public void TestStarted(ITestAdaptor testAdaptor)
 		{
-			VisualStudioIntegration.BroadcastMessage(Messaging.MessageType.TestStarted, Serialize(testAdaptor));
+			AntigravityIntegration.BroadcastMessage(Messaging.MessageType.TestStarted, Serialize(testAdaptor));
 		}
 
 		private static string TestModeName(TestMode testMode)
@@ -84,7 +84,7 @@ namespace Microsoft.Unity.VisualStudio.Editor.Testing
 			// TestMode:Json
 
 			var value = TestModeName(testMode) + ":" + Serialize(testAdaptor);
-			VisualStudioIntegration.BroadcastMessage(Messaging.MessageType.TestListRetrieved, value);
+			AntigravityIntegration.BroadcastMessage(Messaging.MessageType.TestListRetrieved, value);
 		}
 	}
 }

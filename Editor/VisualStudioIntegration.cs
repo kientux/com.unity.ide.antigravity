@@ -8,16 +8,16 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using Microsoft.Unity.VisualStudio.Editor.Messaging;
-using Microsoft.Unity.VisualStudio.Editor.Testing;
+using Antigravity.Unity.Editor.Messaging;
+using Antigravity.Unity.Editor.Testing;
 using UnityEditor;
 using UnityEngine;
-using MessageType = Microsoft.Unity.VisualStudio.Editor.Messaging.MessageType;
+using MessageType = Antigravity.Unity.Editor.Messaging.MessageType;
 
-namespace Microsoft.Unity.VisualStudio.Editor
+namespace Antigravity.Unity.Editor
 {
 	[InitializeOnLoad]
-	internal class VisualStudioIntegration
+	internal class AntigravityIntegration
 	{
 		class Client
 		{
@@ -32,9 +32,9 @@ namespace Microsoft.Unity.VisualStudio.Editor
 		private static readonly object _incomingLock = new object();
 		private static readonly object _clientsLock = new object();
 
-		static VisualStudioIntegration()
+		static AntigravityIntegration()
 		{
-			if (!VisualStudioEditor.IsEnabled)
+			if (!AntigravityEditor.IsEnabled)
 				return;
 
 			RunOnceOnUpdate(() =>
@@ -52,7 +52,7 @@ namespace Microsoft.Unity.VisualStudio.Editor
 				catch (SocketException)
 				{
 					// We'll have a chance to try to rebind on next domain reload
-					Debug.LogWarning($"Unable to use UDP port {messagingPort} for VS/Unity messaging. You should check if another process is already bound to this port or if your firewall settings are compatible.");
+					Debug.LogWarning($"Unable to use UDP port {messagingPort} for Antigravity/Unity messaging. You should check if another process is already bound to this port or if your firewall settings are compatible.");
 				}
 
 				RunOnShutdown(Shutdown);
@@ -197,7 +197,7 @@ namespace Microsoft.Unity.VisualStudio.Editor
 
 		internal static string PackageVersion()
 		{
-			var package = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(VisualStudioIntegration).Assembly);
+			var package = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(AntigravityIntegration).Assembly);
 			return package.version;
 		}
 

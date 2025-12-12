@@ -7,30 +7,21 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace Microsoft.Unity.VisualStudio.Editor
+namespace Antigravity.Unity.Editor
 {
 	internal static class Discovery
 	{
-		public static IEnumerable<IVisualStudioInstallation> GetVisualStudioInstallations()
+		public static IEnumerable<IAntigravityInstallation> GetAntigravityInstallations()
 		{
-#if UNITY_EDITOR_WIN
-			foreach (var installation in VisualStudioForWindowsInstallation.GetVisualStudioInstallations())
-				yield return installation;
-#endif
-
-			foreach (var installation in VisualStudioCodeInstallation.GetVisualStudioInstallations())
+			foreach (var installation in AntigravityInstallation.GetAntigravityInstallations())
 				yield return installation;
 		}
 
-		public static bool TryDiscoverInstallation(string editorPath, out IVisualStudioInstallation installation)
+		public static bool TryDiscoverInstallation(string editorPath, out IAntigravityInstallation installation)
 		{
 			try
 			{
-#if UNITY_EDITOR_WIN
-				if (VisualStudioForWindowsInstallation.TryDiscoverInstallation(editorPath, out installation))
-					return true;
-#endif
-				if (VisualStudioCodeInstallation.TryDiscoverInstallation(editorPath, out installation))
+				if (AntigravityInstallation.TryDiscoverInstallation(editorPath, out installation))
 					return true;
 			}
 			catch (IOException)
@@ -43,10 +34,7 @@ namespace Microsoft.Unity.VisualStudio.Editor
 
 		public static void Initialize()
 		{
-#if UNITY_EDITOR_WIN
-			VisualStudioForWindowsInstallation.Initialize();
-#endif
-			VisualStudioCodeInstallation.Initialize();
+			AntigravityInstallation.Initialize();
 		}
 	}
 }
