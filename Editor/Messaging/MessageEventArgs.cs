@@ -4,16 +4,13 @@
  *--------------------------------------------------------------------------------------------*/
 namespace Antigravity.Unity.Editor.Messaging
 {
-	internal class MessageEventArgs
-	{
-		public Message Message
-		{
-			get;
-		}
+    internal class MessageEventArgs
+    {
+        public Message Message { get; }
 
-		public MessageEventArgs(Message message)
-		{
-			Message = message;
-		}
-	}
+        public MessageEventArgs(Message message)
+        {
+            Message = message;
+        }
+    }
 }

@@ -2,15 +2,15 @@
 
 namespace Antigravity.Unity.Editor
 {
-	internal struct VersionPair
-	{
-		public Version IdeVersion;
-		public Version LanguageVersion;
+    internal struct VersionPair
+    {
+        public Version IdeVersion;
+        public Version LanguageVersion;
 
-		public VersionPair(int idemajor, int ideminor, int languageMajor, int languageMinor)
-		{
-			IdeVersion = new Version(idemajor, ideminor);
-			LanguageVersion = new Version(languageMajor, languageMinor);
-		}
-	}
+        public VersionPair(int idemajor, int ideminor, int languageMajor, int languageMinor)
+        {
+            IdeVersion = new Version(idemajor, ideminor);
+            LanguageVersion = new Version(languageMajor, languageMinor);
+        }
+    }
 }

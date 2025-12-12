@@ -16,247 +16,257 @@ using MessageType = Antigravity.Unity.Editor.Messaging.MessageType;
 
 namespace Antigravity.Unity.Editor
 {
-	[InitializeOnLoad]
-	internal class AntigravityIntegration
-	{
-		class Client
-		{
-			public IPEndPoint EndPoint { get; set; }
-			public double LastMessage { get; set; }
-		}
+    [InitializeOnLoad]
+    internal class AntigravityIntegration
+    {
+        class Client
+        {
+            public IPEndPoint EndPoint { get; set; }
+            public double LastMessage { get; set; }
+        }
 
-		private static Messager _messager;
+        private static Messager _messager;
 
-		private static readonly Queue<Message> _incoming = new Queue<Message>();
-		private static readonly Dictionary<IPEndPoint, Client> _clients = new Dictionary<IPEndPoint, Client>();
-		private static readonly object _incomingLock = new object();
-		private static readonly object _clientsLock = new object();
+        private static readonly Queue<Message> _incoming = new Queue<Message>();
+        private static readonly Dictionary<IPEndPoint, Client> _clients =
+            new Dictionary<IPEndPoint, Client>();
+        private static readonly object _incomingLock = new object();
+        private static readonly object _clientsLock = new object();
 
-		static AntigravityIntegration()
-		{
-			if (!AntigravityEditor.IsEnabled)
-				return;
+        static AntigravityIntegration()
+        {
+            if (!AntigravityEditor.IsEnabled)
+                return;
 
-			RunOnceOnUpdate(() =>
-			{
-				// Despite using ReuseAddress|!ExclusiveAddressUse, we can fail here:
-				// - if another application is using this port with exclusive access
-				// - or if the firewall is not properly configured
-				var messagingPort = MessagingPort();
+            RunOnceOnUpdate(() =>
+            {
+                // Despite using ReuseAddress|!ExclusiveAddressUse, we can fail here:
+                // - if another application is using this port with exclusive access
+                // - or if the firewall is not properly configured
+                var messagingPort = MessagingPort();
 
-				try
-				{
-					_messager = Messager.BindTo(messagingPort);
-					_messager.ReceiveMessage += ReceiveMessage;
-				}
-				catch (SocketException)
-				{
-					// We'll have a chance to try to rebind on next domain reload
-					Debug.LogWarning($"Unable to use UDP port {messagingPort} for Antigravity/Unity messaging. You should check if another process is already bound to this port or if your firewall settings are compatible.");
-				}
+                try
+                {
+                    _messager = Messager.BindTo(messagingPort);
+                    _messager.ReceiveMessage += ReceiveMessage;
+                }
+                catch (SocketException)
+                {
+                    // We'll have a chance to try to rebind on next domain reload
+                    Debug.LogWarning(
+                        $"Unable to use UDP port {messagingPort} for Antigravity/Unity messaging. You should check if another process is already bound to this port or if your firewall settings are compatible."
+                    );
+                }
 
-				RunOnShutdown(Shutdown);
-			});
+                RunOnShutdown(Shutdown);
+            });
 
-			EditorApplication.update += OnUpdate;
-		}
+            EditorApplication.update += OnUpdate;
+        }
 
-		private static void RunOnceOnUpdate(Action action)
-		{
-			var callback = null as EditorApplication.CallbackFunction;
+        private static void RunOnceOnUpdate(Action action)
+        {
+            var callback = null as EditorApplication.CallbackFunction;
 
-			callback = () =>
-			{
-				EditorApplication.update -= callback;
-				action();
-			};
+            callback = () =>
+            {
+                EditorApplication.update -= callback;
+                action();
+            };
 
-			EditorApplication.update += callback;
-		}
+            EditorApplication.update += callback;
+        }
 
-		private static void RunOnShutdown(Action action)
-		{
-			AppDomain.CurrentDomain.DomainUnload += (_, __) => action();
-		}
+        private static void RunOnShutdown(Action action)
+        {
+            AppDomain.CurrentDomain.DomainUnload += (_, __) => action();
+        }
 
-		private static int DebuggingPort()
-		{
-			return 56000 + (System.Diagnostics.Process.GetCurrentProcess().Id % 1000);
-		}
+        private static int DebuggingPort()
+        {
+            return 56000 + (System.Diagnostics.Process.GetCurrentProcess().Id % 1000);
+        }
 
-		private static int MessagingPort()
-		{
-			return DebuggingPort() + 2;
-		}
+        private static int MessagingPort()
+        {
+            return DebuggingPort() + 2;
+        }
 
-		private static void ReceiveMessage(object sender, MessageEventArgs args)
-		{
-			OnMessage(args.Message);
-		}
+        private static void ReceiveMessage(object sender, MessageEventArgs args)
+        {
+            OnMessage(args.Message);
+        }
 
-		private static void OnUpdate()
-		{
-			lock (_incomingLock)
-			{
-				while (_incoming.Count > 0)
-				{
-					ProcessIncoming(_incoming.Dequeue());
-				}
-			}
+        private static void OnUpdate()
+        {
+            lock (_incomingLock)
+            {
+                while (_incoming.Count > 0)
+                {
+                    ProcessIncoming(_incoming.Dequeue());
+                }
+            }
 
-			lock (_clientsLock)
-			{
-				foreach (var client in _clients.Values.ToArray())
-				{
-					// EditorApplication.timeSinceStartup: The time since the editor was started, in seconds, not reset when starting play mode.
-					if (EditorApplication.timeSinceStartup - client.LastMessage > 4)
-						_clients.Remove(client.EndPoint);
-				}
-			}
-		}
+            lock (_clientsLock)
+            {
+                foreach (var client in _clients.Values.ToArray())
+                {
+                    // EditorApplication.timeSinceStartup: The time since the editor was started, in seconds, not reset when starting play mode.
+                    if (EditorApplication.timeSinceStartup - client.LastMessage > 4)
+                        _clients.Remove(client.EndPoint);
+                }
+            }
+        }
 
-		private static void AddMessage(Message message)
-		{
-			lock (_incomingLock)
-			{
-				_incoming.Enqueue(message);
-			}
-		}
+        private static void AddMessage(Message message)
+        {
+            lock (_incomingLock)
+            {
+                _incoming.Enqueue(message);
+            }
+        }
 
-		private static void ProcessIncoming(Message message)
-		{
-			lock (_clientsLock)
-			{
-				CheckClient(message);
-			}
+        private static void ProcessIncoming(Message message)
+        {
+            lock (_clientsLock)
+            {
+                CheckClient(message);
+            }
 
-			switch (message.Type)
-			{
-				case MessageType.Ping:
-					Answer(message, MessageType.Pong);
-					break;
-				case MessageType.Play:
-					Shutdown();
-					EditorApplication.isPlaying = true;
-					break;
-				case MessageType.Stop:
-					EditorApplication.isPlaying = false;
-					break;
-				case MessageType.Pause:
-					EditorApplication.isPaused = true;
-					break;
-				case MessageType.Unpause:
-					EditorApplication.isPaused = false;
-					break;
-				case MessageType.Build:
-					// Not used anymore
-					break;
-				case MessageType.Refresh:
-					Refresh();
-					break;
-				case MessageType.Version:
-					Answer(message, MessageType.Version, PackageVersion());
-					break;
-				case MessageType.UpdatePackage:
-					// Not used anymore
-					break;
-				case MessageType.ProjectPath:
-					Answer(message, MessageType.ProjectPath, Path.GetFullPath(Path.Combine(Application.dataPath, "..")));
-					break;
-				case MessageType.ExecuteTests:
-					TestRunnerApiListener.ExecuteTests(message.Value);
-					break;
-				case MessageType.RetrieveTestList:
-					TestRunnerApiListener.RetrieveTestList(message.Value);
-					break;
-				case MessageType.ShowUsage:
-					UsageUtility.ShowUsage(message.Value);
-					break;
-			}
-		}
+            switch (message.Type)
+            {
+                case MessageType.Ping:
+                    Answer(message, MessageType.Pong);
+                    break;
+                case MessageType.Play:
+                    Shutdown();
+                    EditorApplication.isPlaying = true;
+                    break;
+                case MessageType.Stop:
+                    EditorApplication.isPlaying = false;
+                    break;
+                case MessageType.Pause:
+                    EditorApplication.isPaused = true;
+                    break;
+                case MessageType.Unpause:
+                    EditorApplication.isPaused = false;
+                    break;
+                case MessageType.Build:
+                    // Not used anymore
+                    break;
+                case MessageType.Refresh:
+                    Refresh();
+                    break;
+                case MessageType.Version:
+                    Answer(message, MessageType.Version, PackageVersion());
+                    break;
+                case MessageType.UpdatePackage:
+                    // Not used anymore
+                    break;
+                case MessageType.ProjectPath:
+                    Answer(
+                        message,
+                        MessageType.ProjectPath,
+                        Path.GetFullPath(Path.Combine(Application.dataPath, ".."))
+                    );
+                    break;
+                case MessageType.ExecuteTests:
+                    TestRunnerApiListener.ExecuteTests(message.Value);
+                    break;
+                case MessageType.RetrieveTestList:
+                    TestRunnerApiListener.RetrieveTestList(message.Value);
+                    break;
+                case MessageType.ShowUsage:
+                    UsageUtility.ShowUsage(message.Value);
+                    break;
+            }
+        }
 
-		private static void CheckClient(Message message)
-		{
-			var endPoint = message.Origin;
+        private static void CheckClient(Message message)
+        {
+            var endPoint = message.Origin;
 
-			if (!_clients.TryGetValue(endPoint, out var client))
-			{
-				client = new Client
-				{
-					EndPoint = endPoint,
-					LastMessage = EditorApplication.timeSinceStartup
-				};
+            if (!_clients.TryGetValue(endPoint, out var client))
+            {
+                client = new Client
+                {
+                    EndPoint = endPoint,
+                    LastMessage = EditorApplication.timeSinceStartup,
+                };
 
-				_clients.Add(endPoint, client);
-			}
-			else
-			{
-				client.LastMessage = EditorApplication.timeSinceStartup;
-			}
-		}
+                _clients.Add(endPoint, client);
+            }
+            else
+            {
+                client.LastMessage = EditorApplication.timeSinceStartup;
+            }
+        }
 
-		internal static string PackageVersion()
-		{
-			var package = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(AntigravityIntegration).Assembly);
-			return package.version;
-		}
+        internal static string PackageVersion()
+        {
+            var package = UnityEditor.PackageManager.PackageInfo.FindForAssembly(
+                typeof(AntigravityIntegration).Assembly
+            );
+            return package.version;
+        }
 
-		private static void Refresh()
-		{
-			// If the user disabled auto-refresh in Unity, do not try to force refresh the Asset database
-			if (!EditorPrefs.GetBool("kAutoRefresh", true))
-				return;
+        private static void Refresh()
+        {
+            // If the user disabled auto-refresh in Unity, do not try to force refresh the Asset database
+            if (!EditorPrefs.GetBool("kAutoRefresh", true))
+                return;
 
-			if (UnityInstallation.IsInSafeMode)
-				return;
+            if (UnityInstallation.IsInSafeMode)
+                return;
 
-			RunOnceOnUpdate(AssetDatabase.Refresh);
-		}
+            RunOnceOnUpdate(AssetDatabase.Refresh);
+        }
 
-		private static void OnMessage(Message message)
-		{
-			AddMessage(message);
-		}
+        private static void OnMessage(Message message)
+        {
+            AddMessage(message);
+        }
 
-		private static void Answer(Client client, MessageType answerType, string answerValue)
-		{
-			Answer(client.EndPoint, answerType, answerValue);
-		}
+        private static void Answer(Client client, MessageType answerType, string answerValue)
+        {
+            Answer(client.EndPoint, answerType, answerValue);
+        }
 
-		private static void Answer(Message message, MessageType answerType, string answerValue = "")
-		{
-			var targetEndPoint = message.Origin;
+        private static void Answer(Message message, MessageType answerType, string answerValue = "")
+        {
+            var targetEndPoint = message.Origin;
 
-			Answer(
-				targetEndPoint,
-				answerType,
-				answerValue);
-		}
+            Answer(targetEndPoint, answerType, answerValue);
+        }
 
-		private static void Answer(IPEndPoint targetEndPoint, MessageType answerType, string answerValue)
-		{
-			_messager?.SendMessage(targetEndPoint, answerType, answerValue);
-		}
+        private static void Answer(
+            IPEndPoint targetEndPoint,
+            MessageType answerType,
+            string answerValue
+        )
+        {
+            _messager?.SendMessage(targetEndPoint, answerType, answerValue);
+        }
 
-		private static void Shutdown()
-		{
-			if (_messager == null)
-				return;
+        private static void Shutdown()
+        {
+            if (_messager == null)
+                return;
 
-			_messager.ReceiveMessage -= ReceiveMessage;
-			_messager.Dispose();
-			_messager = null;
-		}
+            _messager.ReceiveMessage -= ReceiveMessage;
+            _messager.Dispose();
+            _messager = null;
+        }
 
-		internal static void BroadcastMessage(MessageType type, string value)
-		{
-			lock (_clientsLock)
-			{
-				foreach (var client in _clients.Values.ToArray())
-				{
-					Answer(client, type, value);
-				}
-			}
-		}
-	}
+        internal static void BroadcastMessage(MessageType type, string value)
+        {
+            lock (_clientsLock)
+            {
+                foreach (var client in _clients.Values.ToArray())
+                {
+                    Answer(client, type, value);
+                }
+            }
+        }
+    }
 }

@@ -6,13 +6,13 @@ using System;
 
 namespace Antigravity.Unity.Editor.Messaging
 {
-	internal class ExceptionEventArgs
-	{
-		public Exception Exception { get; }
+    internal class ExceptionEventArgs
+    {
+        public Exception Exception { get; }
 
-		public ExceptionEventArgs(Exception exception)
-		{
-			Exception = exception;
-		}
-	}
+        public ExceptionEventArgs(Exception exception)
+        {
+            Exception = exception;
+        }
+    }
 }

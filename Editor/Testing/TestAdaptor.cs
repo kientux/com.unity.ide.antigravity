@@ -1,39 +1,38 @@
 ﻿using System;
-
 using UnityEditor.TestTools.TestRunner.Api;
 
 namespace Antigravity.Unity.Editor.Testing
 {
-	[Serializable]
-	internal class TestAdaptorContainer
-	{
-		public TestAdaptor[] TestAdaptors;
-	}
+    [Serializable]
+    internal class TestAdaptorContainer
+    {
+        public TestAdaptor[] TestAdaptors;
+    }
 
-	[Serializable]
-	internal class TestAdaptor
-	{
-		public string Id;
-		public string Name;
-		public string FullName;
+    [Serializable]
+    internal class TestAdaptor
+    {
+        public string Id;
+        public string Name;
+        public string FullName;
 
-		public string Type;
-		public string Method;
-		public string Assembly;
+        public string Type;
+        public string Method;
+        public string Assembly;
 
-		public int Parent;
+        public int Parent;
 
-		public TestAdaptor(ITestAdaptor testAdaptor, int parent)
-		{
-			Id = testAdaptor.Id;
-			Name = testAdaptor.Name;
-			FullName = testAdaptor.FullName;
+        public TestAdaptor(ITestAdaptor testAdaptor, int parent)
+        {
+            Id = testAdaptor.Id;
+            Name = testAdaptor.Name;
+            FullName = testAdaptor.FullName;
 
-			Type = testAdaptor.TypeInfo?.FullName;
-			Method = testAdaptor.Method?.Name;
-			Assembly = testAdaptor.TypeInfo?.Assembly?.Location;
+            Type = testAdaptor.TypeInfo?.FullName;
+            Method = testAdaptor.Method?.Name;
+            Assembly = testAdaptor.TypeInfo?.Assembly?.Location;
 
-			Parent = parent;
-		}
-	}
+            Parent = parent;
+        }
+    }
 }

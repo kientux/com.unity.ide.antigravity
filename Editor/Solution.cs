@@ -4,9 +4,9 @@
  *--------------------------------------------------------------------------------------------*/
 namespace Antigravity.Unity.Editor
 {
-	internal class Solution
-	{
-		public SolutionProjectEntry[] Projects { get; set; }
-		public SolutionProperties[] Properties { get; set; }
-	}
+    internal class Solution
+    {
+        public SolutionProjectEntry[] Projects { get; set; }
+        public SolutionProperties[] Properties { get; set; }
+    }
 }

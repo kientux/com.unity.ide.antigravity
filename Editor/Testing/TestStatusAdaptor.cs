@@ -2,12 +2,12 @@
 
 namespace Antigravity.Unity.Editor.Testing
 {
-	[Serializable]
-	internal enum TestStatusAdaptor
-	{
-		Passed,
-		Skipped,
-		Inconclusive,
-		Failed,
-	}
+    [Serializable]
+    internal enum TestStatusAdaptor
+    {
+        Passed,
+        Skipped,
+        Inconclusive,
+        Failed,
+    }
 }

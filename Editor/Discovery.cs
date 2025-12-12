@@ -9,32 +9,35 @@ using System.IO;
 
 namespace Antigravity.Unity.Editor
 {
-	internal static class Discovery
-	{
-		public static IEnumerable<IAntigravityInstallation> GetAntigravityInstallations()
-		{
-			foreach (var installation in AntigravityInstallation.GetAntigravityInstallations())
-				yield return installation;
-		}
+    internal static class Discovery
+    {
+        public static IEnumerable<IAntigravityInstallation> GetAntigravityInstallations()
+        {
+            foreach (var installation in AntigravityInstallation.GetAntigravityInstallations())
+                yield return installation;
+        }
 
-		public static bool TryDiscoverInstallation(string editorPath, out IAntigravityInstallation installation)
-		{
-			try
-			{
-				if (AntigravityInstallation.TryDiscoverInstallation(editorPath, out installation))
-					return true;
-			}
-			catch (IOException)
-			{
-				installation = null;
-			}
+        public static bool TryDiscoverInstallation(
+            string editorPath,
+            out IAntigravityInstallation installation
+        )
+        {
+            try
+            {
+                if (AntigravityInstallation.TryDiscoverInstallation(editorPath, out installation))
+                    return true;
+            }
+            catch (IOException)
+            {
+                installation = null;
+            }
 
-			return false;
-		}
+            return false;
+        }
 
-		public static void Initialize()
-		{
-			AntigravityInstallation.Initialize();
-		}
-	}
+        public static void Initialize()
+        {
+            AntigravityInstallation.Initialize();
+        }
+    }
 }
